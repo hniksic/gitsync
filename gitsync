@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -e
+
+REMOTE=jump+megalodon-int-dev.node
+
+cd "$(git rev-parse --show-toplevel || echo /-nosuchdirectory-)"
+DIR=${PWD#$HOME/}
+
+remote_origin=$(ssh $REMOTE 'cd '\'"$DIR"\'' && git rev-parse @{u}')
+
+(
+    git bundle create - $remote_origin.. 2>/dev/null | base64 -w0
+    echo
+    git diff --binary | base64 -w0
+    echo
+) \
+    | ssh $REMOTE '
+read bundle && \
+cd '\'"$DIR"\'' && \
+echo "$bundle" | base64 -d > /tmp/git$$ && \
+git fetch -q /tmp/git$$ && \
+git reset -q --hard FETCH_HEAD && \
+git log --oneline @{u}.. && \
+rm /tmp/git$$ && \
+read diff && \
+[ -n "$diff" ] && echo "$diff" | base64 -d | git apply -v
+'
