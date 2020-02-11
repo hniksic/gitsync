@@ -24,7 +24,7 @@ trap "rm -f $loc2rem $rem2loc $bundle" EXIT
 
 mkfifo $loc2rem $rem2loc
 
-ssh $remote '
+ssh "$remote" '
 set -e
 rel_topdir='\'"$rel_topdir"\''
 remote='\'"$remote"\''
