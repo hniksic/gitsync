@@ -46,7 +46,8 @@ echo "Resetting $remote:$rel_topdir to $(git rev-parse --short $new_head)" >&2
 git reset --hard $new_head
 read b64_diff
 if [ -n "$b64_diff" ]; then
-  echo "$b64_diff" | base64 -d | git apply -v
+  echo "Applying uncommitted:" >&2
+  echo "$b64_diff" | base64 -d | git apply --stat --apply >&2
 fi
 ' >$rem2loc <$loc2rem &
 
