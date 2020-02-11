@@ -32,7 +32,7 @@ if [ $# -ne 1 ]; then
    exit 1
 fi
 
-REMOTE=$1
+remote=$1
 
 topdir="$(git rev-parse --show-toplevel)"
 [ -z "$topdir" ] && exit 1
@@ -47,9 +47,15 @@ trap "rm -f $loc2rem $rem2loc $bundle" EXIT
 
 mkfifo $loc2rem $rem2loc
 
-ssh $REMOTE '
+ssh $remote '
 set -e
-cd '\'"$rel_topdir"\''
+rel_topdir='\'"$rel_topdir"\''
+remote='\'"$remote"\''
+if ! [ -d "$rel_topdir" ]; then
+  echo "Missing $rel_topdir on $remote" >&2
+  exit 1
+fi
+cd "$rel_topdir"
 git rev-parse HEAD
 git rev-list @{u}..HEAD | tr "\n" " "; echo
 read b64_bundle
@@ -59,7 +65,7 @@ if [ -n "$b64_bundle" ]; then
   rm /tmp/gitsync$$-fetch
 fi
 read new_head
-echo "resetting '"$REMOTE:$rel_topdir"' to $(git rev-parse --short $new_head)" >&2
+echo "Resetting $remote:$rel_topdir to $(git rev-parse --short $new_head)" >&2
 git reset --hard $new_head
 read b64_diff
 if [ -n "$b64_diff" ]; then
