@@ -2,15 +2,13 @@
 
 # Efficiently sync git-controlled source with a remote server.
 #
-# Uploads both committed and uncommitted data (in files known to git)
-# to the remote host, doing so as efficiently as possible.  git bundle
-# is used to upload local commits, and all data is transferred in a
-# single ssh invocation.  After running the script, the commit and the
-# working tree on the remote side match the local ones.
+# Uploads both committed and uncommitted data (in files known to git) to the
+# remote host.  After running the script, the head of the current branch and
+# the state of the working tree on the remote side will match local ones.
 #
-# The remote host must contain a checkout of the repository in the
-# same location under your $HOME.  For example, if you are working in
-# $HOME/work/repo locally, you must have a "work/repo" on the server.
+# The remote host must contain a checkout of the repository in the same
+# location under your $HOME.  For example, if you are working from ~/work/repo
+# a "work/repo" must exist when you ssh to the server.
 #
 # Usage from Emacs:
 #
@@ -42,9 +40,10 @@ topdir="$(git rev-parse --show-toplevel)"
 rel_topdir=${topdir#$HOME/}
 local_head=$(git rev-parse HEAD)
 
-loc2rem=/tmp/comm$$-loc2rem
-rem2loc=/tmp/comm$$-rem2loc
-trap "rm -f $loc2rem $rem2loc /tmp/bundle$$" EXIT
+loc2rem=/tmp/gitsync$$-loc2rem
+rem2loc=/tmp/gitsync$$-rem2loc
+bundle=/tmp/gitsync$$-bundle
+trap "rm -f $loc2rem $rem2loc $bundle" EXIT
 
 mkfifo $loc2rem $rem2loc
 
@@ -55,9 +54,9 @@ git rev-parse HEAD
 git rev-list @{u}..HEAD | tr "\n" " "; echo
 read b64_bundle
 if [ -n "$b64_bundle" ]; then
-  echo "$b64_bundle" | base64 -d > /tmp/git$$
-  git fetch -q /tmp/git$$
-  rm /tmp/git$$
+  echo "$b64_bundle" | base64 -d > /tmp/gitsync$$-fetch
+  git fetch -q /tmp/gitsync$$-fetch
+  rm /tmp/gitsync$$-fetch
 fi
 read new_head
 echo "resetting '"$REMOTE:$rel_topdir"' to $(git rev-parse --short $new_head)" >&2
@@ -87,20 +86,22 @@ if [ "$remote_head" != "$local_head" ]; then
         fi
     done
     if [ -z "$remote_base" ]; then
-        echo "$0: cannot find known commit among $(echo $remote_revs); try git pull" >&2
+        echo "$0: cannot find familiar commit among $remote_revs; try git pull" >&2
         exit 1
     fi
 else
     remote_base=$local_head
 fi
 
+# "git bundle" refuses to create an empty bundle, so we must check
 if [ "$remote_base" != $local_head ]; then
     echo "sending $(git rev-parse --short $remote_base)..$(git rev-parse --short HEAD)" >&2
-    git bundle create /tmp/bundle$$ $remote_base..HEAD 2>/dev/null
-    cat /tmp/bundle$$ | base64 -w0
+    git bundle create $bundle $remote_base..HEAD 2>/dev/null
+    cat $bundle | base64 -w0
     echo
 else
-    # "git bundle" refuses to create an empty bundle
+    # provide newline to the remote, so it can receive the empty line and skip
+    # "git fetch"
     echo
 fi
 
