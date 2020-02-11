@@ -39,7 +39,7 @@ REMOTE=$1
 topdir="$(git rev-parse --show-toplevel)"
 [ -z "$topdir" ] && exit 1
 
-rel_topdir=${PWD#$HOME/}
+rel_topdir=${topdir#$HOME/}
 local_head=$(git rev-parse HEAD)
 
 loc2rem=/tmp/comm$$-loc2rem
@@ -49,26 +49,23 @@ trap "rm -f $loc2rem $rem2loc /tmp/bundle$$" EXIT
 mkfifo $loc2rem $rem2loc
 
 ssh $REMOTE '
-cd '\'"$rel_topdir"\'' && \
-git rev-parse HEAD && \
-( git rev-list @{u}..HEAD | tr "\n" " " && echo ) && \
-read b64_bundle && \
-( \
-if [ -n "$b64_bundle" ]; then \
-  echo "$b64_bundle" | base64 -d > /tmp/git$$ && \
-  git fetch -q /tmp/git$$ && \
-  rm /tmp/git$$; \
-fi \
-) && \
-read new_head && \
-echo "resetting remote to $(git rev-parse --short $new_head)" >&2 && \
-git reset --hard $new_head && \
-read b64_diff && \
-( \
-if [ -n "$b64_diff" ]; then \
-  echo "$b64_diff" | base64 -d | git apply -v; \
-fi \
-)
+set -e
+cd '\'"$rel_topdir"\''
+git rev-parse HEAD
+git rev-list @{u}..HEAD | tr "\n" " "; echo
+read b64_bundle
+if [ -n "$b64_bundle" ]; then
+  echo "$b64_bundle" | base64 -d > /tmp/git$$
+  git fetch -q /tmp/git$$
+  rm /tmp/git$$
+fi
+read new_head
+echo "resetting '"$REMOTE:$rel_topdir"' to $(git rev-parse --short $new_head)" >&2
+git reset --hard $new_head
+read b64_diff
+if [ -n "$b64_diff" ]; then
+  echo "$b64_diff" | base64 -d | git apply -v
+fi
 ' >$rem2loc <$loc2rem &
 
 exec <$rem2loc >$loc2rem
