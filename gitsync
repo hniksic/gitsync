@@ -57,7 +57,7 @@ if ! [ -d "$rel_topdir" ]; then
 fi
 cd "$rel_topdir"
 git rev-parse HEAD
-git rev-list @{u}..HEAD | tr "\n" " "; echo
+git rev-list @{u}^..HEAD | tr "\n" " "; echo
 read b64_bundle
 if [ -n "$b64_bundle" ]; then
   echo "$b64_bundle" | base64 -d > /tmp/gitsync$$-fetch
@@ -92,7 +92,7 @@ if [ "$remote_head" != "$local_head" ]; then
         fi
     done
     if [ -z "$remote_base" ]; then
-        echo "$0: cannot find familiar commit among $remote_revs; try git pull" >&2
+        echo "$0: cannot find familiar commit among $remote_revs; try git pull locally" >&2
         exit 1
     fi
 else
