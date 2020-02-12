@@ -2,18 +2,25 @@
 
 Efficiently sync git-controlled source with a remote server.
 
-Uploads both committed and uncommitted data (in files known to git) to the
-remote host.  After running the script, the head of the current branch and
-the state of the working tree on the remote side will match local ones.
+Uploads both local git commits and the uncommitted data (in files known to
+git) to the specified remote host via SSH.  After running the script, the head
+of the current branch and the state of the working tree on the remote side
+will match local ones.
 
-The remote host must contain a checkout of the repository in the same
-location under your `$HOME`.  For example, if you are working from
-`~/work/repo` a `work/repo` must exist when you ssh to the server.
+To use, just invoke `gitsync <hostname>` in a git-controlled directory.
+Before first use you must ensure that the remote host contains a checkout of
+the repository in the same relative location under your `$HOME`.  For example,
+if you are working from `~/work/repo` a `work/repo` must exist when you ssh to
+the server.
 
-Usage from Emacs:
+## Emacs
+
+To use `gitsync` from Emacs, you can invoke it as follows:
 
 ```lisp
-(defun sync-git (hostname)
+(defvar gitsync-remote-host "jump+megalodon-int-dev.node")
+
+(defun gitsync-run (hostname)
   (save-some-buffers)
   (message "Syncing %s..."
            (string-trim
@@ -24,7 +31,7 @@ Usage from Emacs:
 (global-set-key "\C-\M-u"
                 (lambda ()
                   (interactive)
-                  (sync-git "jump+megalodon-int-dev.node")))
+                  (gitsync-run gitsync-remote-host)))
 ```
 
 ## License
