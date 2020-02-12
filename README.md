@@ -26,3 +26,10 @@ Usage from Emacs:
                   (interactive)
                   (sync-git "jump+megalodon-int-dev.node")))
 ```
+
+## License
+
+`gitsync` is distributed under the terms of both the [MIT
+license](https://opensource.org/licenses/MIT) and the [Apache License (Version
+2.0)](http://www.apache.org/licenses/LICENSE-2.0).  Contributing changes is
+assumed to signal agreement with these licensing terms.
