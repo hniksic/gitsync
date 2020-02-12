@@ -32,33 +32,39 @@ Applying uncommitted:
  1 file changed, 1 insertion(+), 1 deletion(-)
 ```
 
-In this example the commit range `71e4cae0..9be29a91` was missing on the
-remote server, so those commits were packed up and transferred.  After that,
-the remote branch was reset to `9be29a91`.  Finally, a diff of uncommitted
-changes was transferred and applied to the remote working tree.  If any of
-these things are unnecessary (e.g. there are no missing commits because you've
-locally done `git reset --hard HEAD^`), `gitsync` will detect it and skip that
-part.
+The output tells the user precisely what actions were performed.  In this
+example the local `HEAD` was `9be29a91` and there were some uncommitted
+changes to `src/Cargo.toml`.  `gitsync` worked out that the commit range
+`71e4cae0..9be29a91` was missing from the remote server, so it packed up those
+commits and transferred them to the remote.  It then hard-reset the remote
+branch to `9be29a91`, updating its `HEAD` and clearing leftover modifications
+to the remote working tree, if any.  Finally, a diff of local uncommitted
+changes, was transferred and applied to the remote tree.
+
+In general, if any of the described steps are unnecessary (e.g. there are no
+new commits because you've locally done `git reset --hard HEAD^`), `gitsync`
+will detect that and skip the corresponding action.
 
 ## Emacs
 
-To use `gitsync` from Emacs, you can invoke it as follows:
+The best way to use `gitsync` from Emacs is to bind it to a key.  You can copy
+this code to your init file and modify it to suit your needs.
 
 ```lisp
-(defvar gitsync-remote-host "jump+megalodon-int-dev.node")
+(defvar gitsync-default-remote "jump+megalodon-int-dev.node")
+
+;; example key binding - use a key combination you like
+(global-set-key "\C-\M-u"
+  (lambda () (interactive) (gitsync-run gitsync-default-remote)))
 
 (defun gitsync-run (hostname)
+  "Run gitsync on the provided host name."
   (save-some-buffers)
   (message "Syncing %s..."
            (string-trim
             (shell-command-to-string
              "git rev-parse --show-toplevel")))
   (shell-command (format "gitsync %s" hostname)))
-
-(global-set-key "\C-\M-u"
-                (lambda ()
-                  (interactive)
-                  (gitsync-run gitsync-remote-host)))
 ```
 
 ## License
