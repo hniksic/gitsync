@@ -7,16 +7,21 @@ git) to the specified remote host via SSH.  After running the script, the head
 of the current branch and the state of the working tree on the remote side
 will match local ones.
 
-To use, just invoke `gitsync <hostname>` in a git-controlled directory.
-Before first use you must ensure that the remote host contains a checkout of
+Intended audience are developers who want to **develop** locally because
+that's where they have a nicely configured IDE, but must **run** their
+software remotely because that's where the datasets or other runtime
+environment lies.
+
+## Usage
+
+To use, just invoke `gitsync <hostname>` in a git-controlled directory.  Prior
+to first use you need to ensure that the remote host contains a checkout of
 the repository in the same relative location under your `$HOME`.  For example,
 if you are working from `~/work/repo` a `work/repo` must exist when you ssh to
 the server.
 
-## Usage
-
-Typical usage is to run `gitsync hostname` from the shell or from your IDE.
-For example:
+`gitsync` may also be invoked from IDEs or editors like Emacs and Vim.
+Typical usage looks like this:
 
 ```
 $ gitsync jump+megalodon-int-dev.node
@@ -27,13 +32,13 @@ Applying uncommitted:
  1 file changed, 1 insertion(+), 1 deletion(-)
 ```
 
-In this example the commit range `71e4cae0..9be29a91` was found missing on the
-remote server, so those commits were packed up and sent.  After that, the
-remote branch was reset to `9be29a91`.  Finally, uncommitted changes were
-applied to the remote working tree.  If it is unnecessary to send commits
-(e.g. because you've locally done `git reset --hard HEAD^`), `gitsync` will
-detect it and omit that step.  Likewise, if there are no uncommitted local
-changes, `gitsync` won't be "applying uncommitted".
+In this example the commit range `71e4cae0..9be29a91` was missing on the
+remote server, so those commits were packed up and transferred.  After that,
+the remote branch was reset to `9be29a91`.  Finally, a diff of uncommitted
+changes was transferred and applied to the remote working tree.  If any of
+these things are unnecessary (e.g. there are no missing commits because you've
+locally done `git reset --hard HEAD^`), `gitsync` will detect it and skip that
+part.
 
 ## Emacs
 
