@@ -79,7 +79,7 @@ fi
 
 # "git bundle" refuses to create an empty bundle, so we must check
 if [ "$remote_base" != $local_head ]; then
-    echo "sending $(git rev-parse --short $remote_base)..$(git rev-parse --short HEAD)" >&2
+    echo "Sending $(git rev-parse --short $remote_base)..$(git rev-parse --short HEAD)" >&2
     git bundle create $bundle $remote_base..HEAD 2>/dev/null
     cat $bundle | base64 -w0
     echo
