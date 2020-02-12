@@ -20,21 +20,20 @@ For example:
 
 ```
 $ gitsync jump+megalodon-int-dev.node
-Sending afcc060c..71e4cae0
-Resetting jump+megalodon-int-dev.node:work/ae to 71e4cae0
+Sending 71e4cae0..9be29a91
+Resetting jump+megalodon-int-dev.node:work/ae to 9be29a91
 Applying uncommitted:
- src/Cargo.toml                                  |    2 +-
- src/platforms/sky/src/proc/bin/vod_meta_load.rs |    7 ++++---
- 2 files changed, 5 insertions(+), 4 deletions(-)
+ src/Cargo.toml |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 ```
 
-In this example the commit range `afcc060c..71e4cae0` was found missing on the
+In this example the commit range `71e4cae0..9be29a91` was found missing on the
 remote server, so those commits were packed up and sent.  After that, the
-remote branch was reset to `71e4cae0`.  Finally, uncommitted changes were
-applied to the remote working tree.  If it is unnecessary to pack commits
+remote branch was reset to `9be29a91`.  Finally, uncommitted changes were
+applied to the remote working tree.  If it is unnecessary to send commits
 (e.g. because you've locally done `git reset --hard HEAD^`), `gitsync` will
-detect that and omit that step.  Likewise, if there is no uncommitted local
-data, `gitsync` won't "apply uncommitted".
+detect it and omit that step.  Likewise, if there are no uncommitted local
+changes, `gitsync` won't be "applying uncommitted".
 
 ## Emacs
 
