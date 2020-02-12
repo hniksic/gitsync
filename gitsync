@@ -33,8 +33,7 @@ if ! [ -d "$rel_topdir" ]; then
   exit 1
 fi
 cd "$rel_topdir"
-git rev-parse HEAD
-git rev-list @{u}^..HEAD | tr "\n" " "; echo
+echo $(git rev-list @{u}^..HEAD)
 read b64_bundle
 if [ -n "$b64_bundle" ]; then
   echo "$b64_bundle" | base64 -d > /tmp/gitsync$$-fetch
@@ -43,7 +42,7 @@ if [ -n "$b64_bundle" ]; then
 fi
 read new_head
 echo "Resetting $remote:$rel_topdir to $(git rev-parse --short $new_head)" >&2
-git reset --hard $new_head
+git reset --hard $new_head >/dev/null
 read b64_diff
 if [ -n "$b64_diff" ]; then
   echo "Applying uncommitted:" >&2
@@ -53,15 +52,20 @@ fi
 
 exec <$rem2loc >$loc2rem
 
-read remote_head
-if [ -z "$remote_head" ]; then
+read remote_revs
+if [ -z "$remote_revs" ]; then
     # ssh exited, something went wrong
     exit 1
 fi
-#echo "got remote_head: $remote_head" >&2
-read remote_revs
 #echo "got remote_revs: $remote_revs" >&2
 
+for remote_head in $remote_revs; do
+    break  # remote HEAD is the first revision we get
+done
+
+# The remote sends commits between its upstream and HEAD in reverse
+# chronological order.  Find the first of those that we have in history, and
+# use it as the base for the bundle.
 if [ "$remote_head" != "$local_head" ]; then
     for rev in $remote_revs; do
         if [ "$(git merge-base HEAD $rev 2>/dev/null)" = $rev ]; then
@@ -77,14 +81,14 @@ else
     remote_base=$local_head
 fi
 
-# "git bundle" refuses to create an empty bundle, so we must check
+# "git bundle" refuses to create an empty bundle, so we must check explicitly
 if [ "$remote_base" != $local_head ]; then
     echo "Sending $(git rev-parse --short $remote_base)..$(git rev-parse --short HEAD)" >&2
     git bundle create $bundle $remote_base..HEAD 2>/dev/null
     cat $bundle | base64 -w0
     echo
 else
-    # provide newline to the remote, so it can receive the empty line and skip
+    # send newline to the remote, so it can receive the empty line and skip
     # "git fetch"
     echo
 fi

@@ -9,8 +9,7 @@ will match local ones.
 
 Intended audience are developers who want to **develop** locally because
 that's where they have a nicely configured IDE, but must **run** their
-software remotely because that's where the datasets or other runtime
-environment lies.
+software remotely because that's where the data is.
 
 ## Usage
 
