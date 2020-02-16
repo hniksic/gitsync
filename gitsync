@@ -46,7 +46,7 @@ git reset --hard $new_head >/dev/null
 read b64_diff
 if [ -n "$b64_diff" ]; then
   echo "Applying uncommitted:" >&2
-  echo "$b64_diff" | base64 -d | git apply --stat --apply >&2
+  echo "$b64_diff" | base64 -d | git apply --stat --apply --whitespace=nowarn >&2
 fi
 ' >$rem2loc <$loc2rem &
 
