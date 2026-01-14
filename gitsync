@@ -46,6 +46,10 @@ git reset --hard $new_head >/dev/null
 read b64_diff
 if [ -n "$b64_diff" ]; then
   echo "Applying uncommitted:" >&2
+  # Remove files that the diff will create, in case they exist as untracked
+  echo "$b64_diff" | base64 -d | grep -B1 "^new file mode" | grep "^diff --git" | sed "s|.* b/||" | while read f; do
+    rm -f "$f"
+  done
   echo "$b64_diff" | base64 -d | git apply --stat --apply --whitespace=nowarn >&2
 fi
 ' >$rem2loc <$loc2rem &
