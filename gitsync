@@ -43,13 +43,15 @@ fi
 read new_head
 echo "Resetting $remote:$rel_topdir to $(git rev-parse --short $new_head)" >&2
 git reset --hard $new_head >/dev/null
+read b64_newfiles
+if [ -n "$b64_newfiles" ]; then
+  echo "$b64_newfiles" | base64 -d | while read f; do
+    rm -f "$f"
+  done
+fi
 read b64_diff
 if [ -n "$b64_diff" ]; then
   echo "Applying uncommitted:" >&2
-  # Remove files that the diff will create, in case they exist as untracked
-  echo "$b64_diff" | base64 -d | grep -B1 "^new file mode" | grep "^diff --git" | sed "s|.* b/||" | while read f; do
-    rm -f "$f"
-  done
   echo "$b64_diff" | base64 -d | git apply --stat --apply --whitespace=nowarn >&2
 fi
 ' >$rem2loc <$loc2rem &
@@ -98,7 +100,9 @@ else
 fi
 
 git rev-parse HEAD
-# use "git diff HEAD" to also catch staged differences
+# list of files the diff will create (for remote to remove if they exist)
+git diff -z --name-only --diff-filter=A HEAD | tr '\0' '\n' | base64 -w0
+echo
 git diff --binary HEAD | base64 -w0
 echo
 

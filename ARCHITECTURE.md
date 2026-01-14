@@ -8,7 +8,8 @@ working tree with the local one:
 
 1. Missing commits (as a git bundle)
 2. The target HEAD reference
-3. Uncommitted changes (as a binary diff)
+3. List of new files in the diff (so remote can remove stale previously synced uncommitted copies)
+4. Uncommitted changes (as a binary diff)
 
 ## Communication Architecture
 
@@ -62,6 +63,13 @@ background, allowing the two sides to exchange data synchronously.
     └───────┬─────────┘                                   └────────┬────────┘
             │                                                      │
             ▼                                                      ▼
+    ┌─────────────────┐     base64-encoded file list      ┌─────────────────┐
+    │ git diff        │      (or empty if none)           │ base64 -d       │
+    │ --name-only     │──────────────────────────────────▶│ rm -f each file │
+    │ --diff-filter=A │                                   │ (if exists)     │
+    └───────┬─────────┘                                   └────────┬────────┘
+            │                                                      │
+            ▼                                                      ▼
     ┌─────────────────┐     base64-encoded binary diff    ┌─────────────────┐
     │ git diff        │      (or empty if clean)          │ base64 -d       │
     │ --binary HEAD   │──────────────────────────────────▶│ git apply       │
@@ -70,7 +78,7 @@ background, allowing the two sides to exchange data synchronously.
 
 ## Protocol
 
-The protocol is a synchronous 4-step exchange over a single SSH connection:
+The protocol is a synchronous 5-step exchange over a single SSH connection:
 
 ### Step 1: Remote announces state
 
@@ -103,7 +111,19 @@ LOCAL → REMOTE:
 The remote runs `git reset --hard` to this commit, updating its HEAD and clearing any
 existing uncommitted changes.
 
-### Step 4: Local sends uncommitted changes
+### Step 4: Local sends list of new files
+
+```
+LOCAL → REMOTE:
+"c3JjL25ldy4uLg==" # base64-encoded newline-separated file list (or empty line if none)
+```
+
+Before sending the diff, local identifies files that will be created (`git diff -z
+--name-only --diff-filter=A HEAD`) and sends the list. The remote removes these files if
+they exist (which git reset --hard won't do if you were previously uncommitted),
+preventing "already exists in working directory" errors when applying the diff.
+
+### Step 5: Local sends uncommitted changes
 
 ```
 LOCAL → REMOTE:
