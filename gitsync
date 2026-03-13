@@ -11,7 +11,7 @@ fi
 
 remote=$1
 
-topdir="$(git rev-parse --show-toplevel)"
+topdir="$(git worktree list --porcelain | head -1 | sed 's/^worktree //')"
 [ -z "$topdir" ] && exit 1
 
 rel_topdir=${topdir#$HOME/}
