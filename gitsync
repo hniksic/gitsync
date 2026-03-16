@@ -11,7 +11,7 @@ fi
 
 remote=$1
 
-topdir="$(git worktree list --porcelain | head -1 | sed 's/^worktree //')"
+topdir="$(git rev-parse --show-toplevel)"
 [ -z "$topdir" ] && exit 1
 
 rel_topdir=${topdir#$HOME/}
@@ -28,10 +28,21 @@ ssh "$remote" '
 set -e
 rel_topdir='\'"$rel_topdir"\''
 remote='\'"$remote"\''
-if ! [ -d "$rel_topdir" ]; then
-  echo "Missing $rel_topdir on $remote" >&2
-  exit 1
-fi
+# The local git top-level may not exist on the remote, e.g. when syncing
+# from a worktree whose directory is not replicated remotely. Walk up the
+# path until we find a directory that is a git repo on the remote.
+orig_rel_topdir="$rel_topdir"
+while true; do
+  if [ -d "$rel_topdir" ] && git -C "$rel_topdir" rev-parse --git-dir >/dev/null 2>&1; then
+    break
+  fi
+  parent="$(dirname "$rel_topdir")"
+  if [ "$parent" = "$rel_topdir" ]; then
+    echo "No git repo found at or above $orig_rel_topdir on $remote" >&2
+    exit 1
+  fi
+  rel_topdir="$parent"
+done
 cd "$rel_topdir"
 echo $(git rev-list @{u}^..HEAD)
 read b64_bundle
