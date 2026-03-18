@@ -60,7 +60,7 @@ this code to your init file and modify it to suit your needs.
 (defun gitsync-run (hostname)
   "Run gitsync on the provided host name."
   (save-some-buffers)
-  (shell-command (format "gitsync %s" hostname)))
+  (async-shell-command (format "gitsync %s" hostname)))
 ```
 
 ## License
