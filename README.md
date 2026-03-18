@@ -45,6 +45,21 @@ In general, if any of the described steps are unnecessary (e.g. there are no
 new commits because you've locally done `git reset --hard HEAD^`), `gitsync`
 will detect that and skip the corresponding action.
 
+## Redirect
+
+By default, `gitsync` syncs to the same relative path on the remote. If the remote
+checkout lives under a different directory name, you can redirect to it:
+
+```
+$ gitsync --redirect other-name
+Redirect set to other-name
+$ gitsync --no-redirect
+Redirect cleared
+```
+
+The redirect replaces the last path component when looking for the remote git repo. The
+setting is stored in `.gitsync-redirect` in the repo root.
+
 ## Emacs
 
 The best way to use `gitsync` from Emacs is to bind it to a key.  You can copy

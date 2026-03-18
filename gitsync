@@ -63,7 +63,9 @@ redirect_basename='\'"$redirect_basename"\''
 # The local git top-level may not exist on the remote, e.g. when syncing
 # from a worktree whose directory is not replicated remotely. Walk up the
 # path until we find a directory that is a git repo on the remote.
-# When redirecting, try dirname(current)/redirect_basename at each level.
+# When redirecting, replace the last component with redirect_basename at
+# each level of the walk. For example, syncing from a/b/c with
+# redirect_basename=y tries a/b/y, then a/y, etc.
 orig_rel_topdir="$rel_topdir"
 while true; do
   if [ -n "$redirect_basename" ]; then
