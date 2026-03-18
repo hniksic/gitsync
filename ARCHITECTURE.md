@@ -11,6 +11,11 @@ working tree with the local one:
 3. List of new files in the diff (so remote can remove stale previously synced uncommitted copies)
 4. Uncommitted changes (as a binary diff)
 
+The remote path is normally derived from the local path relative to `$HOME`. A
+`.gitsync-redirect` file in the repo root can override the last path component, allowing
+sync to a sibling directory (e.g. `work/ae-foxtel` instead of `work/ae`). Use
+`--redirect DIR` to set it and `--no-redirect` to clear it.
+
 ## Communication Architecture
 
 gitsync uses named pipes (FIFOs) to create bidirectional communication over SSH:

@@ -4,17 +4,47 @@
 
 set -e
 
+topdir="$(git rev-parse --show-toplevel)"
+[ -z "$topdir" ] && exit 1
+
+redirect_file="$topdir/.gitsync-redirect"
+
+case "$1" in
+    --redirect)
+        if [ -z "$2" ]; then
+            echo "Usage: $0 --redirect DIR" >&2
+            exit 1
+        fi
+        echo "$2" > "$redirect_file"
+        echo "Redirect set to $2" >&2
+        exit 0
+        ;;
+    --no-redirect)
+        rm -f "$redirect_file"
+        echo "Redirect cleared" >&2
+        exit 0
+        ;;
+    -*)
+        echo "Unknown option: $1" >&2
+        exit 1
+        ;;
+esac
+
 if [ $# -ne 1 ]; then
-   echo "Usage: $0 HOST" >&2
-   exit 1
+    echo "Usage: $0 HOST | $0 --redirect DIR | $0 --no-redirect" >&2
+    exit 1
 fi
 
 remote=$1
 
-topdir="$(git rev-parse --show-toplevel)"
-[ -z "$topdir" ] && exit 1
-
 rel_topdir=${topdir#$HOME/}
+redirect_basename=""
+if [ -f "$redirect_file" ]; then
+    redirect_basename=$(cat "$redirect_file")
+    echo "Syncing $topdir to $remote (redirecting to $redirect_basename)" >&2
+else
+    echo "Syncing $topdir to $remote:$rel_topdir" >&2
+fi
 local_head=$(git rev-parse HEAD)
 
 loc2rem=/tmp/gitsync$$-loc2rem
@@ -28,12 +58,20 @@ ssh "$remote" '
 set -e
 rel_topdir='\'"$rel_topdir"\''
 remote='\'"$remote"\''
+redirect_basename='\'"$redirect_basename"\''
 # The local git top-level may not exist on the remote, e.g. when syncing
 # from a worktree whose directory is not replicated remotely. Walk up the
 # path until we find a directory that is a git repo on the remote.
+# When redirecting, try dirname(current)/redirect_basename at each level.
 orig_rel_topdir="$rel_topdir"
 while true; do
-  if [ -d "$rel_topdir" ] && git -C "$rel_topdir" rev-parse --git-dir >/dev/null 2>&1; then
+  if [ -n "$redirect_basename" ]; then
+    target="$(dirname "$rel_topdir")/$redirect_basename"
+  else
+    target="$rel_topdir"
+  fi
+  if [ -d "$target" ] && git -C "$target" rev-parse --git-dir >/dev/null 2>&1; then
+    rel_topdir="$target"
     break
   fi
   parent="$(dirname "$rel_topdir")"

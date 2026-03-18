@@ -24,6 +24,7 @@ Typical usage looks like this:
 
 ```
 $ gitsync jump+megalodon-int-dev.node
+Syncing to jump+megalodon-int-dev.node:work/ae
 Sending 71e4cae0..9be29a91
 Resetting jump+megalodon-int-dev.node:work/ae to 9be29a91
 Applying uncommitted:
@@ -59,10 +60,6 @@ this code to your init file and modify it to suit your needs.
 (defun gitsync-run (hostname)
   "Run gitsync on the provided host name."
   (save-some-buffers)
-  (message "Syncing %s..."
-           (string-trim
-            (shell-command-to-string
-             "git rev-parse --show-toplevel")))
   (shell-command (format "gitsync %s" hostname)))
 ```
 
