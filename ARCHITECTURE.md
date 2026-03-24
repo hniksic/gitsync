@@ -49,12 +49,12 @@ background, allowing the two sides to exchange data synchronously.
                                                                    │
                                                                    ▼
                                                           ┌─────────────────┐
-                         ┌────────────────────────────────│ git rev-list    │
-                         │      rev-list: SHAs of         │ @{u}^..HEAD     │
-    ┌────────────────┐   │    commits remote has          └─────────────────┘
-    │ Find common    │◀──┘   (reverse chronological)
-    │ ancestor via   │        e.g. "abc123 def456 ..."
-    │ git merge-base │
+                         ┌────────────────────────────────│ echo $rel_topdir│
+                         │    resolved remote path        │ git rev-list    │
+    ┌────────────────┐   │    + rev-list: SHAs of         │ @{u}^..HEAD     │
+    │ Find common    │◀──┘   commits remote has           └─────────────────┘
+    │ ancestor via   │      (reverse chronological)
+    │ git merge-base │        e.g. "abc123 def456 ..."
     └───────┬────────┘
             │
             ▼
@@ -88,18 +88,21 @@ background, allowing the two sides to exchange data synchronously.
 
 The protocol is a synchronous 5-step exchange over a single SSH connection:
 
-### Step 1: Remote announces state
+### Step 1: Remote announces resolved path and state
 
 ```
 REMOTE → LOCAL:
+"work/ae-testing"      # resolved remote rel_topdir (after walk-up and redirect)
 "sha1 sha2 sha3 ..."   # rev-list from @{u}^ to HEAD (reverse chronological)
 ```
 
-The remote sends all commits between its upstream and HEAD. The local side iterates
-through these to find the first commit that exists in local history (via `git
-merge-base`), which becomes the base for the bundle.
+The remote first sends the resolved relative directory it ended up in (after walk-up
+and optional redirect). Then it sends all commits between its upstream and HEAD. The
+local side uses the resolved path for status messages, and iterates through the
+rev-list to find the first commit that exists in local history (via `git merge-base`),
+which becomes the base for the bundle.
 
-### Step 2: Local sends missing commits
+### Step 2: Local sends missing commits (bundle)
 
 ```
 LOCAL → REMOTE:
@@ -109,7 +112,7 @@ LOCAL → REMOTE:
 If there are commits to transfer, local creates a git bundle containing `$base..HEAD` and
 sends it base64-encoded. The remote decodes it and runs `git fetch` from the bundle file.
 
-### Step 3: Local sends target HEAD
+### Step 3: Local sends target HEAD reference
 
 ```
 LOCAL → REMOTE:
@@ -119,7 +122,7 @@ LOCAL → REMOTE:
 The remote runs `git reset --hard` to this commit, updating its HEAD and clearing any
 existing uncommitted changes.
 
-### Step 4: Local sends list of new files
+### Step 4: Local sends list of new files to remove
 
 ```
 LOCAL → REMOTE:
@@ -131,7 +134,7 @@ Before sending the diff, local identifies files that will be created (`git diff 
 they exist (which git reset --hard won't do if you were previously uncommitted),
 preventing "already exists in working directory" errors when applying the diff.
 
-### Step 5: Local sends uncommitted changes
+### Step 5: Local sends uncommitted changes (diff)
 
 ```
 LOCAL → REMOTE:

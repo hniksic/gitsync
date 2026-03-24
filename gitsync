@@ -41,9 +41,9 @@ rel_topdir=${topdir#$HOME/}
 redirect_basename=""
 if [ -f "$redirect_file" ]; then
     redirect_basename=$(cat "$redirect_file")
-    echo "Syncing $topdir to $remote (redirect: $redirect_basename)" >&2
+    echo "Syncing $topdir to $remote:${rel_topdir%/*} [$redirect_basename]" >&2
 else
-    echo "Syncing $topdir to $remote" >&2
+    echo "Syncing $topdir to $remote:$rel_topdir" >&2
 fi
 local_head=$(git rev-parse HEAD)
 
@@ -85,7 +85,7 @@ while true; do
   rel_topdir="$parent"
 done
 cd "$rel_topdir"
-echo "Remote directory: $remote:$rel_topdir" >&2
+echo "$rel_topdir"
 echo $(git rev-list @{u}^..HEAD)
 read b64_bundle
 if [ -n "$b64_bundle" ]; then
@@ -111,6 +111,7 @@ fi
 
 exec <$rem2loc >$loc2rem
 
+read remote_reldir
 read remote_revs
 if [ -z "$remote_revs" ]; then
     # ssh exited, something went wrong
@@ -142,7 +143,7 @@ fi
 
 # "git bundle" refuses to create an empty bundle, so we must check explicitly
 if [ "$remote_base" != $local_head ]; then
-    echo "Sending $(git rev-parse --short $remote_base)..$(git rev-parse --short HEAD)" >&2
+    echo "Sending $(git rev-parse --short $remote_base)..$(git rev-parse --short HEAD) to $remote:$remote_reldir" >&2
     git bundle create $bundle $remote_base..HEAD 2>/dev/null
     cat $bundle | base64 -w0
     echo
@@ -160,3 +161,4 @@ git diff --binary HEAD | base64 -w0
 echo
 
 wait
+echo "Sync done" >&2
