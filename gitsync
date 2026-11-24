@@ -41,9 +41,9 @@ rel_topdir=${topdir#$HOME/}
 redirect_basename=""
 if [ -f "$redirect_file" ]; then
     redirect_basename=$(cat "$redirect_file")
-    echo "Syncing $topdir to $remote:${rel_topdir%/*} [$redirect_basename]" >&2
+    echo "Syncing $topdir to $remote [$redirect_basename]" >&2
 else
-    echo "Syncing $topdir to $remote:$rel_topdir" >&2
+    echo "Syncing $topdir to $remote" >&2
 fi
 local_head=$(git rev-parse HEAD)
 

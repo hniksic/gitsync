@@ -24,8 +24,8 @@ Typical usage looks like this:
 
 ```
 $ gitsync jump+megalodon-int-dev.node
-Syncing to jump+megalodon-int-dev.node:work/ae
-Sending 71e4cae0..9be29a91
+Syncing /home/user/work/ae to jump+megalodon-int-dev.node
+Sending 71e4cae0..9be29a91 to jump+megalodon-int-dev.node:work/ae
 Resetting jump+megalodon-int-dev.node:work/ae to 9be29a91
 Applying uncommitted:
  src/Cargo.toml |    2 +-
